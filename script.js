@@ -1,22 +1,21 @@
+// Cars rendered with Material Design Icons via the Iconify CDN.
+// Each card gets a themed background color and a white icon for contrast.
 const CARS = [
-  { emoji: "🚗", name: "くるま" },
-  { emoji: "🚕", name: "タクシー" },
-  { emoji: "🚌", name: "バス" },
-  { emoji: "🚎", name: "トロリーバス" },
-  { emoji: "🏎️", name: "レーシングカー" },
-  { emoji: "🚓", name: "パトカー" },
-  { emoji: "🚑", name: "きゅうきゅうしゃ" },
-  { emoji: "🚒", name: "しょうぼうしゃ" },
-  { emoji: "🚐", name: "バン" },
-  { emoji: "🛻", name: "ピックアップトラック" },
-  { emoji: "🚚", name: "トラック" },
-  { emoji: "🚛", name: "おおきなトラック" },
-  { emoji: "🚜", name: "トラクター" },
-  { emoji: "🚙", name: "ジープ" },
-  { emoji: "🚲", name: "じてんしゃ" },
-  { emoji: "🛵", name: "スクーター" },
-  { emoji: "🏍️", name: "バイク" },
-  { emoji: "🚂", name: "きかんしゃ" },
+  { name: "パトカー",      icon: "mdi:car-emergency", bg: "#1a237e" },
+  { name: "しょうぼうしゃ", icon: "mdi:fire-truck",    bg: "#c62828" },
+  { name: "きゅうきゅうしゃ", icon: "mdi:ambulance",   bg: "#ef5350" },
+  { name: "ダンプカー",    icon: "mdi:dump-truck",    bg: "#f9a825" },
+  { name: "ブルドーザー",  icon: "mdi:bulldozer",     bg: "#f57c00" },
+  { name: "ショベルカー",  icon: "mdi:excavator",     bg: "#ef6c00" },
+  { name: "フォークリフト", icon: "mdi:forklift",     bg: "#ff7043" },
+  { name: "レッカーしゃ",  icon: "mdi:tow-truck",     bg: "#5d4037" },
+  { name: "トラック",      icon: "mdi:truck",         bg: "#1976d2" },
+  { name: "トラクター",    icon: "mdi:tractor",       bg: "#2e7d32" },
+  { name: "バス",          icon: "mdi:bus",           bg: "#00897b" },
+  { name: "タクシー",      icon: "mdi:taxi",          bg: "#fdd835", fg: "#212121" },
+  { name: "くるま",        icon: "mdi:car",           bg: "#e53935" },
+  { name: "でんしゃ",      icon: "mdi:train",         bg: "#6a1b9a" },
+  { name: "しんかんせん",  icon: "mdi:train-variant", bg: "#0277bd" },
 ];
 
 const PRAISES = ["せいかい！", "やったー！", "じょうずだね！", "すごい！", "おみごと！", "ぴんぽーん！"];
@@ -24,6 +23,11 @@ const TRY_AGAINS = ["もういちど！", "おしいー！", "もういっかい
 const CELEBRATE_EMOJIS = ["🎉", "✨", "🌟", "💯", "👏"];
 
 const GRID_SIZE = 6;
+const ICON_BASE = "https://api.iconify.design";
+
+function iconUrl(icon, color) {
+  return `${ICON_BASE}/${icon}.svg?color=${encodeURIComponent(color)}`;
+}
 
 let currentTarget = null;
 let currentCars = [];
@@ -84,8 +88,15 @@ function newRound() {
   for (const car of currentCars) {
     const btn = document.createElement("button");
     btn.className = "car-card";
-    btn.textContent = car.emoji;
+    btn.style.background = car.bg;
     btn.setAttribute("aria-label", car.name);
+
+    const img = document.createElement("img");
+    img.src = iconUrl(car.icon, car.fg ?? "#ffffff");
+    img.alt = "";
+    img.draggable = false;
+    btn.appendChild(img);
+
     btn.addEventListener("click", () => onPick(btn, car));
     grid.appendChild(btn);
   }
@@ -143,5 +154,4 @@ document.getElementById("replay-btn").addEventListener("click", () => {
   }
 });
 
-// Prevent iOS double-tap zoom on the game area
 document.addEventListener("dblclick", (e) => e.preventDefault(), { passive: false });
