@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#4FC3F7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>くるまクイズ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="start-screen" class="screen">
+    <h1>くるま<br>クイズ</h1>
+    <p class="subtitle">どのくるまかな？</p>
+    <button id="start-btn" class="big-btn">はじめる</button>
+  </div>
+
+  <div id="game-screen" class="screen hidden">
+    <header>
+      <button id="replay-btn" class="icon-btn" aria-label="もういちど きく">🔊</button>
+      <div id="question">どれかな？</div>
+      <div id="score" aria-label="せいかいすう">0</div>
+    </header>
+    <main id="grid"></main>
+  </div>
+
+  <div id="feedback" class="feedback" aria-hidden="true"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
