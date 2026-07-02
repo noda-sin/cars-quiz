@@ -6,26 +6,29 @@
   <meta name="theme-color" content="#4FC3F7">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚗</text></svg>">
   <title>くるまクイズ</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="start-screen" class="screen">
+    <div class="start-emoji">🚗🚒🚑</div>
     <h1>くるま<br>クイズ</h1>
-    <p class="subtitle">どのくるまかな？</p>
+    <p class="subtitle">きこえた くるまを タッチしてね</p>
     <button id="start-btn" class="big-btn">はじめる</button>
   </div>
 
   <div id="game-screen" class="screen hidden">
     <header>
       <button id="replay-btn" class="icon-btn" aria-label="もういちど きく">🔊</button>
-      <div id="question">どれかな？</div>
-      <div id="score" aria-label="せいかいすう">0</div>
+      <div id="question">どーれだ？</div>
+      <div id="stars" aria-label="せいかいすう"></div>
     </header>
     <main id="grid"></main>
   </div>
 
   <div id="feedback" class="feedback" aria-hidden="true"></div>
+  <div id="confetti" aria-hidden="true"></div>
 
   <script src="script.js"></script>
 </body>

@@ -1,66 +1,84 @@
-// Cars rendered with Material Design Icons via the Iconify CDN.
-// Each card gets a themed background color and a white icon for contrast.
+// くるまクイズ — 実写写真とナレーション音声で「〇〇はどーれだ？」
+// 写真: images/cars/<slug>.jpg (Wikipedia/Wikimedia Commons)
+// 音声: audio/*.mp3 (自然な日本語ナレーション)
+
 const CARS = [
-  { name: "パトカー",      icon: "mdi:car-emergency", bg: "#1a237e" },
-  { name: "しょうぼうしゃ", icon: "mdi:fire-truck",    bg: "#c62828" },
-  { name: "きゅうきゅうしゃ", icon: "mdi:ambulance",   bg: "#ef5350" },
-  { name: "ダンプカー",    icon: "mdi:dump-truck",    bg: "#f9a825" },
-  { name: "ブルドーザー",  icon: "mdi:bulldozer",     bg: "#f57c00" },
-  { name: "ショベルカー",  icon: "mdi:excavator",     bg: "#ef6c00" },
-  { name: "フォークリフト", icon: "mdi:forklift",     bg: "#ff7043" },
-  { name: "レッカーしゃ",  icon: "mdi:tow-truck",     bg: "#5d4037" },
-  { name: "トラック",      icon: "mdi:truck",         bg: "#1976d2" },
-  { name: "トラクター",    icon: "mdi:tractor",       bg: "#2e7d32" },
-  { name: "バス",          icon: "mdi:bus",           bg: "#00897b" },
-  { name: "タクシー",      icon: "mdi:taxi",          bg: "#fdd835", fg: "#212121" },
-  { name: "くるま",        icon: "mdi:car",           bg: "#e53935" },
-  { name: "でんしゃ",      icon: "mdi:train",         bg: "#6a1b9a" },
-  { name: "しんかんせん",  icon: "mdi:train-variant", bg: "#0277bd" },
+  { slug: "police_car",    name: "パトカー" },
+  { slug: "fire_truck",    name: "しょうぼうしゃ" },
+  { slug: "ambulance",     name: "きゅうきゅうしゃ" },
+  { slug: "dump_truck",    name: "ダンプカー" },
+  { slug: "bulldozer",     name: "ブルドーザー" },
+  { slug: "excavator",     name: "ショベルカー" },
+  { slug: "crane_truck",   name: "クレーンしゃ" },
+  { slug: "mixer_truck",   name: "ミキサーしゃ" },
+  { slug: "garbage_truck", name: "ごみしゅうしゅうしゃ" },
+  { slug: "forklift",      name: "フォークリフト" },
+  { slug: "tow_truck",     name: "レッカーしゃ" },
+  { slug: "truck",         name: "トラック" },
+  { slug: "tractor",       name: "トラクター" },
+  { slug: "bus",           name: "バス" },
+  { slug: "taxi",          name: "タクシー" },
+  { slug: "car",           name: "じどうしゃ" },
+  { slug: "motorcycle",    name: "バイク" },
+  { slug: "road_roller",   name: "ロードローラー" },
+  { slug: "train",         name: "でんしゃ" },
+  { slug: "shinkansen",    name: "しんかんせん" },
 ];
 
-const PRAISES = ["せいかい！", "やったー！", "じょうずだね！", "すごい！", "おみごと！", "ぴんぽーん！"];
-const TRY_AGAINS = ["もういちど！", "おしいー！", "もういっかい！", "うーん？"];
-const CELEBRATE_EMOJIS = ["🎉", "✨", "🌟", "💯", "👏"];
-
 const GRID_SIZE = 6;
-const ICON_BASE = "https://api.iconify.design";
-
-function iconUrl(icon, color) {
-  return `${ICON_BASE}/${icon}.svg?color=${encodeURIComponent(color)}`;
-}
+const PRAISE_COUNT = 4;
+const CELEBRATE_EMOJIS = ["🎉", "✨", "🌟", "💮", "👏"];
+const CONFETTI_EMOJIS = ["🎉", "⭐", "✨", "🎈", "💛", "🧡"];
 
 let currentTarget = null;
 let currentCars = [];
-let score = 0;
+let stars = 0;
 let busy = false;
-let jaVoice = null;
 
-function loadVoices() {
-  if (!("speechSynthesis" in window)) return;
-  const voices = speechSynthesis.getVoices();
-  jaVoice =
-    voices.find((v) => v.lang === "ja-JP") ||
-    voices.find((v) => v.lang.startsWith("ja")) ||
-    null;
+// ---- audio ----------------------------------------------------------------
+// 単一の Audio 要素を使い回す (iOS はユーザー操作で unlock した要素しか鳴らせない)
+const player = new Audio();
+let onPlayerEnded = null;
+
+player.addEventListener("ended", () => {
+  const cb = onPlayerEnded;
+  onPlayerEnded = null;
+  if (cb) cb();
+});
+
+function playClip(key, onEnd) {
+  onPlayerEnded = onEnd || null;
+  player.src = `audio/${key}.mp3`;
+  const p = player.play();
+  if (p) p.catch(() => speakFallback(key));
 }
 
-if ("speechSynthesis" in window) {
-  loadVoices();
-  speechSynthesis.onvoiceschanged = loadVoices;
-}
-
-function speak(text, opts = {}) {
+// 音声ファイルが再生できない環境向けフォールバック
+function speakFallback(key) {
   if (!("speechSynthesis" in window)) return;
+  let text = null;
+  if (key.startsWith("q_")) {
+    const car = CARS.find((c) => c.slug === key.slice(2));
+    if (car) text = `${car.name}は、どーれだ？`;
+  } else if (key.startsWith("praise_")) {
+    text = "せいかい！";
+  } else if (key.startsWith("retry_") || key.startsWith("n_")) {
+    text = "ちがうよ、もういっかい！";
+  } else if (key === "start") {
+    text = "はじめるよ！";
+  }
+  if (!text) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "ja-JP";
-  u.rate = opts.rate ?? 0.95;
-  u.pitch = opts.pitch ?? 1.2;
-  u.volume = 1;
-  if (jaVoice) u.voice = jaVoice;
+  u.rate = 0.95;
   speechSynthesis.speak(u);
+  const cb = onPlayerEnded;
+  onPlayerEnded = null;
+  if (cb) u.onend = cb;
 }
 
+// ---- game -----------------------------------------------------------------
 function pickRandom(arr, n) {
   const copy = arr.slice();
   const result = [];
@@ -71,8 +89,8 @@ function pickRandom(arr, n) {
   return result;
 }
 
-function questionText(car) {
-  return `${car.name}は どれかな？`;
+function askQuestion() {
+  playClip(`q_${currentTarget.slug}`);
 }
 
 function newRound() {
@@ -81,27 +99,26 @@ function newRound() {
   currentCars = pickRandom(CARS, GRID_SIZE);
   currentTarget = currentCars[Math.floor(Math.random() * currentCars.length)];
 
-  document.getElementById("question").textContent = questionText(currentTarget);
+  document.getElementById("question").textContent = `${currentTarget.name}は どーれだ？`;
 
   const grid = document.getElementById("grid");
   grid.innerHTML = "";
   for (const car of currentCars) {
     const btn = document.createElement("button");
     btn.className = "car-card";
-    btn.style.background = car.bg;
     btn.setAttribute("aria-label", car.name);
 
     const img = document.createElement("img");
-    img.src = iconUrl(car.icon, car.fg ?? "#ffffff");
-    img.alt = "";
+    img.src = `images/cars/${car.slug}.jpg`;
+    img.alt = car.name;
     img.draggable = false;
     btn.appendChild(img);
 
-    btn.addEventListener("click", () => onPick(btn, car));
+    btn.addEventListener("pointerdown", () => onPick(btn, car));
     grid.appendChild(btn);
   }
 
-  setTimeout(() => speak(questionText(currentTarget)), 250);
+  setTimeout(askQuestion, 400);
 }
 
 function onPick(btn, car) {
@@ -112,21 +129,32 @@ function onPick(btn, car) {
     document.querySelectorAll(".car-card").forEach((el) => {
       if (el !== btn) el.classList.add("dim");
     });
-    score++;
-    document.getElementById("score").textContent = score;
+    stars++;
+    renderStars();
+    showFeedback(CELEBRATE_EMOJIS[Math.floor(Math.random() * CELEBRATE_EMOJIS.length)]);
+    burstConfetti(btn);
 
-    const emoji = CELEBRATE_EMOJIS[Math.floor(Math.random() * CELEBRATE_EMOJIS.length)];
-    showFeedback(emoji);
+    const n = 1 + Math.floor(Math.random() * PRAISE_COUNT);
+    playClip(`praise_${n}`);
 
-    const praise = PRAISES[Math.floor(Math.random() * PRAISES.length)];
-    speak(praise, { pitch: 1.5, rate: 1.0 });
-
-    setTimeout(newRound, 1900);
+    setTimeout(newRound, 2300);
   } else {
     btn.classList.add("wrong");
-    setTimeout(() => btn.classList.remove("wrong"), 500);
-    const t = TRY_AGAINS[Math.floor(Math.random() * TRY_AGAINS.length)];
-    speak(t, { pitch: 1.1 });
+    setTimeout(() => btn.classList.remove("wrong"), 600);
+    // 「それは、〇〇だね。」→ もう一度質問
+    playClip(`n_${car.slug}`, () => {
+      if (!busy) setTimeout(askQuestion, 350);
+    });
+  }
+}
+
+// ---- ui -------------------------------------------------------------------
+function renderStars() {
+  const el = document.getElementById("stars");
+  if (stars <= 5) {
+    el.textContent = "⭐".repeat(stars);
+  } else {
+    el.textContent = `⭐×${stars}`;
   }
 }
 
@@ -140,18 +168,44 @@ function hideFeedback() {
   document.getElementById("feedback").classList.remove("show");
 }
 
+function burstConfetti(fromEl) {
+  const box = document.getElementById("confetti");
+  const rect = fromEl.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement("span");
+    s.className = "confetti-piece";
+    s.textContent = CONFETTI_EMOJIS[Math.floor(Math.random() * CONFETTI_EMOJIS.length)];
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 90 + Math.random() * 160;
+    s.style.left = `${cx}px`;
+    s.style.top = `${cy}px`;
+    s.style.setProperty("--dx", `${Math.cos(angle) * dist}px`);
+    s.style.setProperty("--dy", `${Math.sin(angle) * dist - 60}px`);
+    s.style.setProperty("--rot", `${(Math.random() - 0.5) * 540}deg`);
+    box.appendChild(s);
+    setTimeout(() => s.remove(), 1300);
+  }
+}
+
+// ---- boot -----------------------------------------------------------------
 document.getElementById("start-btn").addEventListener("click", () => {
-  // Prime speech synthesis on first user gesture (required on iOS)
-  speak("はじめるよ", { rate: 1.0 });
+  // ユーザー操作の中で一度 play して iOS の audio を unlock する
+  playClip("start");
   document.getElementById("start-screen").classList.add("hidden");
   document.getElementById("game-screen").classList.remove("hidden");
-  setTimeout(newRound, 500);
+  setTimeout(newRound, 1600);
 });
 
 document.getElementById("replay-btn").addEventListener("click", () => {
-  if (currentTarget && !busy) {
-    speak(questionText(currentTarget));
-  }
+  if (currentTarget && !busy) askQuestion();
 });
+
+// 画像の先読み
+for (const car of CARS) {
+  const img = new Image();
+  img.src = `images/cars/${car.slug}.jpg`;
+}
 
 document.addEventListener("dblclick", (e) => e.preventDefault(), { passive: false });

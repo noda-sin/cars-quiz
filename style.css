@@ -116,20 +116,18 @@ header {
   box-shadow: 0 1px 0 rgba(0,0,0,0.15);
 }
 
-#score {
-  font-size: 26px;
+#stars {
+  font-size: 22px;
   font-weight: bold;
   min-width: 56px;
+  max-width: 34vw;
   text-align: center;
   background: white;
   border-radius: 26px;
-  padding: 6px 14px;
+  padding: 8px 14px;
   box-shadow: 0 3px 0 rgba(0,0,0,0.1);
-}
-
-#score::before {
-  content: "⭐";
-  margin-right: 4px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 #grid {
@@ -152,7 +150,7 @@ header {
 
 .car-card {
   background: white;
-  border-radius: 28px;
+  border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -168,11 +166,10 @@ header {
 }
 
 .car-card img {
-  width: 78%;
-  height: 78%;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   pointer-events: none;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
 }
 
 .car-card:active {
@@ -182,18 +179,20 @@ header {
 
 .car-card.correct {
   animation: correct 0.7s ease;
-  background: #c8e6c9;
   border-color: #4caf50;
+  box-shadow: 0 0 0 6px rgba(76,175,80,0.55), 0 6px 20px rgba(0,0,0,0.25);
+  z-index: 2;
 }
 
 .car-card.wrong {
   animation: wrong 0.45s ease;
-  background: #ffe0b2;
   border-color: #ff9800;
 }
 
 .car-card.dim {
-  opacity: 0.5;
+  opacity: 0.35;
+  filter: grayscale(0.6);
+  transition: opacity 0.4s, filter 0.4s;
 }
 
 @keyframes correct {
@@ -237,4 +236,42 @@ header {
   0% { transform: scale(0.3) rotate(-20deg); opacity: 0; }
   50% { transform: scale(1.2) rotate(10deg); opacity: 1; }
   100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* ===== Start screen emoji ===== */
+.start-emoji {
+  font-size: clamp(40px, 10vw, 80px);
+  animation: bounce 1.6s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+
+/* ===== Confetti ===== */
+#confetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: fixed;
+  font-size: 30px;
+  animation: fly 1.2s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes fly {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6) rotate(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy) + 120px)) scale(1.2) rotate(var(--rot));
+    opacity: 0;
+  }
 }
